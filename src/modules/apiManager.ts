@@ -25,8 +25,7 @@ export const getAllContacts = async () => {
       "Content-Type": "application/json",
     }
   })
-  const data = await r.json();
-  return data;
+  return r.json();
 };
 
 export const deleteContact = async (id: number) => {
@@ -51,8 +50,8 @@ export const postContact = async (contact: Contact) => {
   return r.json();
 };
 
-export const updateContact = async (contact: Contact) => {
-  const r = await fetch(baseURL, {
+export const updateContact = async (id: number, contact: Contact) => {
+  const r = await fetch(`${baseURL}/${id}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",

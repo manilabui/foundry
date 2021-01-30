@@ -1,48 +1,72 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Layout, Text, List } from '@ui-kitten/components';
+import { Layout, Text, List, Divider, Input } from '@ui-kitten/components';
 
 import { getAllContacts, Contact } from '../modules/apiManager';
 import { ContactModal } from '../components/ContactModal';
 
-const defaultContacts = [{
-		id: 1,
-		name: 'Ye',
-	  email: 'kanye@west.com',
-	  phone: '808-808-8085',
-	  notes: 'Kanye <3 Kanye'
-	}];
+const defaultContact = {
+  id: 0,
+  name: '',
+  email: '',
+  phone: '',
+  notes: ''
+};
 
 export const HomeScreen = () => {
 	const insets = useSafeAreaInsets();
 	const [showContact, setShowContactModal] = useState(false);
-	const [contacts, setContacts] = useState(defaultContacts);
-	const [currContact, setCurrContact] = useState(defaultContacts[0]);
+	const [contacts, setContacts] = useState([defaultContact]);
+	const [currContact, setCurrContact] = useState<Contact>(defaultContact);
+	const [search, setSearch] = useState('');
+	const [searchResults, setSearchResults] = useState<Contact[]|undefined>();
 
 	const loadContacts = async () => {
 		const contactList = await getAllContacts();
 		setContacts(contactList);
 	};
 
-	useEffect(loadContacts, []);
+	useEffect(() => { loadContacts() }, []);
 
-	const buttonHandler = (item) => {
+	const contactItemHandler = (item: Contact) => {
 		setCurrContact(item);
 		setShowContactModal(true);
 	};
 
+	const onChangeText = (nextValue: string) => {
+		const filteredContacts = contacts.filter(({ name }) => name.includes(nextValue));
+
+		setSearch(nextValue);
+		setSearchResults(filteredContacts);
+	};
+
 	return (
 	  <Layout style={[styles.container, { paddingTop: insets.top + 20 }]}>
-	    <Text category='h2' style={{ color: 'seagreen' }}>CONTACTS</Text>
+	    <Text category="h2" style={styles.header}>CONTACTS</Text>
+	    <Input
+	    	size='medium'
+	    	style={styles.search}
+        placeholder='Search for a contact'
+        value={search}
+        onChangeText={nextValue => onChangeText(nextValue)}
+      />
+      <Divider/>
+      <Pressable style={{ padding: 15 }} onPress={() => contactItemHandler(defaultContact)}>
+      	<Text category="p2" status="warning">+ Add New Contact</Text>
+      </Pressable>
+    	<Divider/>
 	    <List
         style={{ backgroundColor: 'transparent' }}
-        data={contacts}
+        data={search.length ? searchResults : contacts}
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
-          <Pressable onPress={() => buttonHandler(item)}>
-          	<Text>{item.name}</Text>
-          </Pressable>
+        	<>
+	          <Pressable style={{ padding: 15 }} onPress={() => contactItemHandler(item)}>
+	          	<Text category="label">{item.name}</Text>
+	          </Pressable>
+          	<Divider/>
+          </>
         )}
       />
 	    <ContactModal
@@ -57,7 +81,16 @@ export const HomeScreen = () => {
 const styles = StyleSheet.create({
   container: {
   	flex: 1, 
-  	alignItems: 'center',
   	backgroundColor: 'lightyellow'
   },
+  header: { 
+  	color: 'seagreen',
+  	alignSelf: 'center',
+  	paddingBottom: 15
+  },
+  search: { 
+  	width: '50%', 
+  	borderColor: 'white', 
+  	backgroundColor: 'transparent' 
+  }
 });
